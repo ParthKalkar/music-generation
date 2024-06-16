@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -15,6 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'theme_manager.dart';
 import 'package:provider/provider.dart';
+import 'audio_player_widget.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,11 +54,12 @@ class _ChatPageState extends State<ChatPage> {
   final _user = const types.User(
     id: '82091008-a484-4a89-ae75-a22bf8d6f3ac',
   );
+  List<String> _significantWords = [];
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
+    _loadInitialMessage();
   }
 
   void _addMessage(types.Message message) {
@@ -161,9 +164,9 @@ class _ChatPageState extends State<ChatPage> {
       if (message.uri.startsWith('http')) {
         try {
           final index =
-              _messages.indexWhere((element) => element.id == message.id);
+          _messages.indexWhere((element) => element.id == message.id);
           final updatedMessage =
-              (_messages[index] as types.FileMessage).copyWith(
+          (_messages[index] as types.FileMessage).copyWith(
             isLoading: true,
           );
 
@@ -183,9 +186,9 @@ class _ChatPageState extends State<ChatPage> {
           }
         } finally {
           final index =
-              _messages.indexWhere((element) => element.id == message.id);
+          _messages.indexWhere((element) => element.id == message.id);
           final updatedMessage =
-              (_messages[index] as types.FileMessage).copyWith(
+          (_messages[index] as types.FileMessage).copyWith(
             isLoading: null,
           );
 
@@ -200,9 +203,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _handlePreviewDataFetched(
-    types.TextMessage message,
-    types.PreviewData previewData,
-  ) {
+      types.TextMessage message,
+      types.PreviewData previewData,
+      ) {
     final index = _messages.indexWhere((element) => element.id == message.id);
     final updatedMessage = (_messages[index] as types.TextMessage).copyWith(
       previewData: previewData,
@@ -213,7 +216,7 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  void _handleSendPressed(types.PartialText message) {
+  void _handleSendPressed(types.PartialText message) async {
     final textMessage = types.TextMessage(
       author: _user,
       createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -222,6 +225,179 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     _addMessage(textMessage);
+
+    // Collect all user messages
+    List<String> userMessages = _messages
+        .where((msg) => msg is types.TextMessage && msg.author.id == _user.id)
+        .map((msg) => (msg as types.TextMessage).text)
+        .toList();
+
+    // Calculate weights
+    List<Map<String, dynamic>> weightedMessages = _calculateWeights(userMessages);
+
+    // Use appropriate URL depending on the platform
+    final url = (Platform.isAndroid)
+        ? 'http://10.0.2.2:5000/significant-words'
+        : 'http://127.0.0.1:5000/significant-words';
+
+    // Send to backend
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'text_weight_pairs': weightedMessages,
+        'num_words': 5,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      List<String> significantWords = List<String>.from(data['significant_words']);
+      print('Significant words: $significantWords');
+
+      // Combine significant words into a single string
+      String combinedKeywords = significantWords.join(" ");
+      print('Combined Keywords: $combinedKeywords');
+
+      // Send the combined keywords to the prediction API
+      await _sendKeywordToApi(combinedKeywords);
+    } else {
+      throw Exception('Failed to load significant words');
+    }
+  }
+
+  Future<void> _sendKeywordToApi(String keywords) async {
+    final predictionResponse = await http.post(
+      Uri.parse('https://api.replicate.com/v1/predictions'),
+      headers: {
+        'Authorization': 'Bearer r8_W6n6kHfeuDSqWSoLLgWQ6dMV7cP08V123EVNs',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'version': '671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb',
+        'input': {
+          'prompt': keywords,
+        },
+      }),
+    );
+
+    if (predictionResponse.statusCode == 201) {
+      final predictionData = json.decode(predictionResponse.body);
+      final predictionId = predictionData['id'];
+      print('Prediction created: $predictionId');
+
+      // Check the status of the prediction
+      await _checkPredictionStatus(predictionId);
+    } else {
+      print('Prediction response status: ${predictionResponse.statusCode}');
+      print('Prediction response body: ${predictionResponse.body}');
+      throw Exception('Failed to create prediction');
+    }
+  }
+
+  Future<void> _checkPredictionStatus(String predictionId) async {
+    while (true) {
+      final statusResponse = await http.get(
+        Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
+        headers: {
+          'Authorization': 'Bearer r8_W6n6kHfeuDSqWSoLLgWQ6dMV7cP08V123EVNs',
+        },
+      );
+
+      if (statusResponse.statusCode == 200) {
+        final statusData = json.decode(statusResponse.body);
+        final status = statusData['status'];
+        if (status == 'succeeded') {
+          final outputUrl = statusData['output'];
+          _addMusicMessage(outputUrl);
+          break;
+        } else if (status == 'failed') {
+          throw Exception('Prediction failed');
+        } else {
+          // Wait for a few seconds before checking the status again
+          await Future.delayed(Duration(seconds: 5));
+        }
+      } else {
+        throw Exception('Failed to check prediction status');
+      }
+    }
+  }
+
+  void _addMusicMessage(String url) {
+    final musicMessage = types.CustomMessage(
+      author: types.User(
+        id: 'muziker_ai',
+        firstName: 'Muziker',
+        lastName: 'AI',
+        imageUrl: 'assets/logo.png',
+      ),
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      id: const Uuid().v4(),
+      metadata: {
+        'type': 'audio',
+        'url': url,
+      },
+    );
+    print(url);
+    _addMessage(musicMessage);
+  }
+
+  List<Map<String, dynamic>> _calculateWeights(List<String> messages) {
+    int n = messages.length;
+    List<Map<String, dynamic>> weightedMessages = [];
+
+    for (int i = 0; i < n; i++) {
+      double weight = (i + 1) / ((n * (n + 1)) / 2);
+      weightedMessages.add({
+        'text': messages[i],
+        'weight': weight,
+      });
+    }
+
+    return weightedMessages;
+  }
+
+  void _loadInitialMessage() async {
+    final random = Random();
+    final response = await rootBundle.loadString('assets/messages.json');
+    final List initialMessages = jsonDecode(response);
+    int randomIndex = random.nextInt(initialMessages.length);
+    var selectedMessage = initialMessages[randomIndex];
+
+    var initialMessage;
+    if (selectedMessage['type'] == 'text') {
+      initialMessage = types.TextMessage(
+        author: types.User(
+          id: selectedMessage['author']['id'],
+          firstName: selectedMessage['author']['firstName'],
+          lastName: selectedMessage['author']['lastName'],
+          imageUrl: selectedMessage['author']['imageUrl'],
+        ),
+        createdAt: selectedMessage['createdAt'],
+        id: selectedMessage['id'],
+        text: selectedMessage['text'],
+        type: types.MessageType.text,
+      );
+    } else if (selectedMessage['type'] == 'custom' && selectedMessage['metadata']['type'] == 'audio') {
+      initialMessage = types.CustomMessage(
+        author: types.User(
+          id: selectedMessage['author']['id'],
+          firstName: selectedMessage['author']['firstName'],
+          lastName: selectedMessage['author']['lastName'],
+          imageUrl: selectedMessage['author']['imageUrl'],
+        ),
+        createdAt: selectedMessage['createdAt'],
+        id: selectedMessage['id'],
+        metadata: {
+          'type': 'audio',
+          'url': selectedMessage['metadata']['url'],
+        },
+      );
+    }
+
+    if (initialMessage != null) {
+      _addMessage(initialMessage);
+    }
   }
 
   void _loadMessages() async {
@@ -240,7 +416,6 @@ class _ChatPageState extends State<ChatPage> {
     // Accessing the current theme data from ThemeManager
     final themeManager = Provider.of<ThemeManager>(context);
     final chatTheme = DefaultChatTheme(
-
       inputBackgroundColor: themeManager.themeData.inputDecorationTheme.fillColor ?? Color(0xFF7B2CBF)!,
       backgroundColor: themeManager.themeData.scaffoldBackgroundColor,
       sentMessageBodyTextStyle: TextStyle(color: themeManager.themeData.colorScheme.onPrimary),
@@ -252,7 +427,8 @@ class _ChatPageState extends State<ChatPage> {
       receivedMessageCaptionTextStyle: TextStyle(color: themeManager.themeData.colorScheme.onSecondary),
       receivedMessageDocumentIconColor: themeManager.themeData.colorScheme.inverseSurface,
       inputTextColor: Colors.white,
-      inputTextCursorColor: themeManager.themeData.primaryColor, dateDividerTextStyle:TextStyle(color: Colors.white)
+      inputTextCursorColor: themeManager.themeData.primaryColor,
+      dateDividerTextStyle: TextStyle(color: Colors.white),
     );
 
     return Scaffold(
@@ -267,7 +443,17 @@ class _ChatPageState extends State<ChatPage> {
         showUserNames: true,
         user: _user,
         theme: chatTheme,
+        customMessageBuilder: _buildCustomMessage,
       ),
     );
+  }
+
+  Widget _buildCustomMessage(types.CustomMessage message, {required int messageWidth}) {
+    if (message.metadata?['type'] == 'audio') {
+      final String url = message.metadata!['url'];
+      final bool isAsset = url.startsWith('assets/');
+      return AudioPlayerWidget(url: url, isAsset: isAsset);
+    }
+    return const SizedBox.shrink();
   }
 }
