@@ -234,6 +234,7 @@ class _ChatPageState extends State<ChatPage> {
 
     // Calculate weights
     List<Map<String, dynamic>> weightedMessages = _calculateWeights(userMessages);
+    print(userMessages);
 
     // Use appropriate URL depending on the platform
     final url = (Platform.isAndroid)
@@ -246,7 +247,7 @@ class _ChatPageState extends State<ChatPage> {
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'text_weight_pairs': weightedMessages,
-        'num_words': 5,
+        'num_words': 7,
       }),
     );
 
@@ -270,7 +271,7 @@ class _ChatPageState extends State<ChatPage> {
     final predictionResponse = await http.post(
       Uri.parse('https://api.replicate.com/v1/predictions'),
       headers: {
-        'Authorization': 'Bearer r8_W6n6kHfeuDSqWSoLLgWQ6dMV7cP08V123EVNs',
+        'Authorization': 'Bearer r8_AdbhLPC3rRchWZgSyOjCUkZd5h0hLaR02nJht',
         'Content-Type': 'application/json',
       },
       body: json.encode({
@@ -300,7 +301,7 @@ class _ChatPageState extends State<ChatPage> {
       final statusResponse = await http.get(
         Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
         headers: {
-          'Authorization': 'Bearer r8_W6n6kHfeuDSqWSoLLgWQ6dMV7cP08V123EVNs',
+          'Authorization': 'Bearer r8_AdbhLPC3rRchWZgSyOjCUkZd5h0hLaR02nJht',
         },
       );
 
@@ -347,13 +348,13 @@ class _ChatPageState extends State<ChatPage> {
     List<Map<String, dynamic>> weightedMessages = [];
 
     for (int i = 0; i < n; i++) {
-      double weight = (i + 1) / ((n * (n + 1)) / 2);
+      double weight = (n - i) / ((n * (n + 1)) / 2);
       weightedMessages.add({
         'text': messages[i],
         'weight': weight,
       });
     }
-
+    print(weightedMessages);
     return weightedMessages;
   }
 
