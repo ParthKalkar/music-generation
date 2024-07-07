@@ -17,6 +17,7 @@ import 'package:uuid/uuid.dart';
 import 'theme_manager.dart';
 import 'package:provider/provider.dart';
 import 'audio_player_widget.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -271,7 +272,7 @@ class _ChatPageState extends State<ChatPage> {
     final predictionResponse = await http.post(
       Uri.parse('https://api.replicate.com/v1/predictions'),
       headers: {
-        'Authorization': 'Bearer r8_AdbhLPC3rRchWZgSyOjCUkZd5h0hLaR02nJht',
+        'Authorization': 'Bearer r8_BzCm7TjVpG05T35ULo6qaaUXOmoBiGp1g7hYK',
         'Content-Type': 'application/json',
       },
       body: json.encode({
@@ -301,7 +302,7 @@ class _ChatPageState extends State<ChatPage> {
       final statusResponse = await http.get(
         Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
         headers: {
-          'Authorization': 'Bearer r8_AdbhLPC3rRchWZgSyOjCUkZd5h0hLaR02nJht',
+          'Authorization': 'Bearer r8_BzCm7TjVpG05T35ULo6qaaUXOmoBiGp1g7hYK',
         },
       );
 
