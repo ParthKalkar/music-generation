@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "829356467327",
+    "project_id": "muziker-dd7bf",
+    "storage_bucket": "muziker-dd7bf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829356467327:android:912347f5b9892b7a45cb4a",
+        "android_client_info": {
+          "package_name": "com.hca.muziker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKLyaTC3HS0rDUf-U2a2ParLJEZg5NFAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

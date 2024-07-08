@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:aws_common/aws_common.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -17,31 +19,11 @@ import 'package:uuid/uuid.dart';
 import 'theme_manager.dart';
 import 'package:provider/provider.dart';
 import 'audio_player_widget.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'settings_provider.dart';
+import 'package:aws_signature_v4/aws_signature_v4.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  ThemeManager themeManager = await ThemeManager.loadPreferences();
-  runApp(MyApp(themeManager: themeManager));
-  initializeDateFormatting().then((_) => runApp(MyApp(themeManager: themeManager)));
-}
-
-class MyApp extends StatelessWidget {
-  final ThemeManager themeManager;
-  MyApp({required this.themeManager});
-
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider<ThemeManager>(
-      create: (_) => themeManager,
-      child: Consumer<ThemeManager>(
-        builder: (context, theme, _) => MaterialApp(
-          theme: theme.themeData,
-          home: ChatPage(),
-        ),
-      ),
-    );
-  }
-}
+const modelName = 'musicgen-small-v1-asyc-2024-07-07-18-13-00-613';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -52,15 +34,19 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   List<types.Message> _messages = [];
-  final _user = const types.User(
-    id: '82091008-a484-4a89-ae75-a22bf8d6f3ac',
-  );
-  List<String> _significantWords = [];
+  User? _firebaseUser;
 
   @override
   void initState() {
     super.initState();
+    _firebaseUser = FirebaseAuth.instance.currentUser;
     _loadInitialMessage();
+  }
+
+  types.User get _user {
+    return types.User(
+      id: _firebaseUser?.uid ?? '',
+    );
   }
 
   void _addMessage(types.Message message) {
@@ -164,10 +150,8 @@ class _ChatPageState extends State<ChatPage> {
 
       if (message.uri.startsWith('http')) {
         try {
-          final index =
-          _messages.indexWhere((element) => element.id == message.id);
-          final updatedMessage =
-          (_messages[index] as types.FileMessage).copyWith(
+          final index = _messages.indexWhere((element) => element.id == message.id);
+          final updatedMessage = (_messages[index] as types.FileMessage).copyWith(
             isLoading: true,
           );
 
@@ -186,10 +170,8 @@ class _ChatPageState extends State<ChatPage> {
             await file.writeAsBytes(bytes);
           }
         } finally {
-          final index =
-          _messages.indexWhere((element) => element.id == message.id);
-          final updatedMessage =
-          (_messages[index] as types.FileMessage).copyWith(
+          final index = _messages.indexWhere((element) => element.id == message.id);
+          final updatedMessage = (_messages[index] as types.FileMessage).copyWith(
             isLoading: null,
           );
 
@@ -227,105 +209,224 @@ class _ChatPageState extends State<ChatPage> {
 
     _addMessage(textMessage);
 
-    // Collect all user messages
-    List<String> userMessages = _messages
-        .where((msg) => msg is types.TextMessage && msg.author.id == _user.id)
-        .map((msg) => (msg as types.TextMessage).text)
-        .toList();
+    final settings = Provider.of<SettingsProvider>(context, listen: false).settings;
 
-    // Calculate weights
-    List<Map<String, dynamic>> weightedMessages = _calculateWeights(userMessages);
-    print(userMessages);
+    // Create JSON payload
+    final jsonPayload = jsonEncode({
+      "texts": [message.text],
+      "bucket_name": 'sagemaker-eu-central-1-471112987728',
+      "generation_params": {
+        "guidance_scale": settings.guidanceScale,
+        "max_new_tokens": settings.maxNewTokens,
+        "do_sample": settings.doSample,
+        "temperature": settings.temperature,
+      }
+    });
 
-    // Use appropriate URL depending on the platform
-    final url = (Platform.isAndroid)
-        ? 'http://10.0.2.2:5000/significant-words'
-        : 'http://127.0.0.1:5000/significant-words';
+    // Generate a unique file name
+    final fileName = 'payload_${DateTime.now().millisecondsSinceEpoch}.json';
+    final filePath = 'musicgen_small/input_payload/$fileName';
 
-    // Send to backend
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'text_weight_pairs': weightedMessages,
-        'num_words': 7,
-      }),
-    );
+    // Upload JSON file to S3
+    final s3Uri = await _uploadToS3(jsonPayload, filePath);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      List<String> significantWords = List<String>.from(data['significant_words']);
-      print('Significant words: $significantWords');
+    // Call the SageMaker endpoint
+    final outputUri = await _callSageMaker(s3Uri);
+    print(outputUri);
 
-      // Combine significant words into a single string
-      String combinedKeywords = significantWords.join(" ");
-      print('Combined Keywords: $combinedKeywords');
-
-      // Send the combined keywords to the prediction API
-      await _sendKeywordToApi(combinedKeywords);
-    } else {
-      throw Exception('Failed to load significant words');
-    }
+    // Poll the SageMaker endpoint to get the result
+    final audioUri = await _pollSageMakerResult(outputUri);
+    print(audioUri);
+    // Save to Firestore
+    _saveToFirestore(audioUri, message.text);
+    // Add music message
+    _addMusicMessage(audioUri, message.text);
   }
 
-  Future<void> _sendKeywordToApi(String keywords) async {
-    final predictionResponse = await http.post(
-      Uri.parse('https://api.replicate.com/v1/predictions'),
+  Future<String> _uploadToS3(String jsonPayload, String filePath) async {
+    final s3Bucket = 'sagemaker-eu-central-1-471112987728';
+    final region = 'eu-central-1';
+    final endpoint = 'https://$s3Bucket.s3.$region.amazonaws.com/$filePath';
+
+    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
+    const awsSecretKey = '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';
+    final credentialsProvider = AWSCredentialsProvider(
+        AWSCredentials(awsAccessKey, awsSecretKey)
+    );
+    final signer = AWSSigV4Signer(
+      credentialsProvider: credentialsProvider,
+    );
+
+    final request = AWSHttpRequest(
+      method: AWSHttpMethod.put,
+      uri: Uri.parse(endpoint),
       headers: {
-        'Authorization': 'Bearer r8_BzCm7TjVpG05T35ULo6qaaUXOmoBiGp1g7hYK',
         'Content-Type': 'application/json',
       },
-      body: json.encode({
-        'version': '671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb',
-        'input': {
-          'prompt': keywords,
-        },
-      }),
+      body: utf8.encode(jsonPayload),
     );
 
-    if (predictionResponse.statusCode == 201) {
-      final predictionData = json.decode(predictionResponse.body);
-      final predictionId = predictionData['id'];
-      print('Prediction created: $predictionId');
+    final scope = AWSCredentialScope(
+      region: region,
+      service: AWSService.s3,
+    );
 
-      // Check the status of the prediction
-      await _checkPredictionStatus(predictionId);
+    final signedRequest = await signer.sign(
+      request,
+      credentialScope: scope,
+    );
+
+    final client = http.Client();
+    final response = await client.send(
+      http.Request(signedRequest.method.value, signedRequest.uri)
+        ..headers.addAll(signedRequest.headers)
+        ..bodyBytes = await signedRequest.bodyBytes,
+    );
+
+
+    if (response.statusCode == 200) {
+      return 's3://$s3Bucket/$filePath';
     } else {
-      print('Prediction response status: ${predictionResponse.statusCode}');
-      print('Prediction response body: ${predictionResponse.body}');
-      throw Exception('Failed to create prediction');
+      final responseBody = await response.stream.bytesToString();
+      throw Exception('Failed to upload to S3: ${response.statusCode} $responseBody');
     }
   }
 
-  Future<void> _checkPredictionStatus(String predictionId) async {
+  Future<String> _callSageMaker(String s3Uri) async {
+    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
+    const awsSecretKey = '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';
+    final region = 'eu-central-1';
+    final endpoint = 'https://runtime.sagemaker.eu-central-1.amazonaws.com/endpoints/$modelName/async-invocations';
+
+    final credentialsProvider = AWSCredentialsProvider(
+        AWSCredentials(awsAccessKey, awsSecretKey)
+    );
+    final signer = AWSSigV4Signer(
+      credentialsProvider: credentialsProvider,
+    );
+
+
+    final request = AWSHttpRequest(
+      method: AWSHttpMethod.post,
+      uri: Uri.parse(endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Amzn-SageMaker-InvocationTimeoutSeconds': '3600',
+        'X-Amzn-SageMaker-InputLocation': s3Uri,
+        'X-Amzn-SageMaker-EndpointName': modelName,
+      },
+    );
+
+    final scope = AWSCredentialScope(
+      region: region,
+      service: AWSService.sageMaker,
+    );
+
+    final signedRequest = await signer.sign(
+      request,
+      credentialScope: scope,
+    );
+
+    final client = http.Client();
+    final response = await client.send(
+      http.Request(signedRequest.method.value, signedRequest.uri)
+        ..headers.addAll(signedRequest.headers)
+        ..bodyBytes = await signedRequest.bodyBytes,
+    );
+
+    if (response.statusCode == 202) {
+      final headers = response.headers;
+      return headers['x-amzn-sagemaker-outputlocation']!;
+    } else {
+      final responseBody = await response.stream.bytesToString();
+      throw Exception('Failed to call SageMaker: ${response.statusCode} $responseBody');
+    }
+  }
+
+  String s3ToHttp(String url) {
+    if (url.startsWith('s3://')) {
+      final s3Path = url.substring(5);
+      final bucket = s3Path.split('/')[0];
+      final objectName = s3Path.split('/').sublist(1).join('/');
+      return 'https://$bucket.s3.eu-central-1.amazonaws.com/$objectName';
+    } else {
+      return url;
+    }
+  }
+
+  Future<String> _pollSageMakerResult(String outputUri) async {
+    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
+    const awsSecretKey = '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';
+    final region = 'eu-central-1';
+
+    final credentialsProvider = AWSCredentialsProvider(
+        AWSCredentials(awsAccessKey, awsSecretKey)
+    );
+    final signer = AWSSigV4Signer(
+      credentialsProvider: credentialsProvider,
+    );
+
+    // Convert the s3 URI to a https URI
+    final httpsUri = Uri.parse(s3ToHttp(outputUri));
+
+    final request = AWSHttpRequest(
+      method: AWSHttpMethod.get,
+      uri: httpsUri,
+    );
+
+    final scope = AWSCredentialScope(
+      region: region,
+      service: AWSService.s3,
+    );
+
     while (true) {
-      final statusResponse = await http.get(
-        Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
-        headers: {
-          'Authorization': 'Bearer r8_BzCm7TjVpG05T35ULo6qaaUXOmoBiGp1g7hYK',
-        },
+      final signedRequest = await signer.sign(
+        request,
+        credentialScope: scope,
       );
 
-      if (statusResponse.statusCode == 200) {
-        final statusData = json.decode(statusResponse.body);
-        final status = statusData['status'];
-        if (status == 'succeeded') {
-          final outputUrl = statusData['output'];
-          _addMusicMessage(outputUrl);
-          break;
-        } else if (status == 'failed') {
-          throw Exception('Prediction failed');
-        } else {
-          // Wait for a few seconds before checking the status again
-          await Future.delayed(Duration(seconds: 5));
-        }
+      final client = http.Client();
+      final response = await client.send(
+        http.Request(signedRequest.method.value, signedRequest.uri)
+          ..headers.addAll(signedRequest.headers),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final jsonResponse = jsonDecode(responseBody);
+        print("SageMaker result: $jsonResponse");
+        final s3Uri = jsonResponse['generated_output_s3'];
+        final output = s3ToHttp(s3Uri);
+        print(output);
+
+        return output;
+
+      } else if (response.statusCode == 202) {
+        print("Job is still in progress, retrying...");
       } else {
-        throw Exception('Failed to check prediction status');
+        print("Polling failed: ${response.statusCode}");
+        print("Job is still in progress, retrying...");
       }
+
+      // Wait for a few seconds before polling again
+      await Future.delayed(Duration(seconds: 5));
     }
   }
 
-  void _addMusicMessage(String url) {
+  Future<void> _saveToFirestore(String url, String name) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('musics').add({
+        'uid': user.uid,
+        'uri': url,
+        'name': name,
+      });
+    } else {
+      print('No user is signed in');
+    }
+  }
+
+  void _addMusicMessage(String url, String prompt) {
     final musicMessage = types.CustomMessage(
       author: types.User(
         id: 'muziker_ai',
@@ -338,25 +439,12 @@ class _ChatPageState extends State<ChatPage> {
       metadata: {
         'type': 'audio',
         'url': url,
+        'name': prompt,
       },
     );
+
     print(url);
     _addMessage(musicMessage);
-  }
-
-  List<Map<String, dynamic>> _calculateWeights(List<String> messages) {
-    int n = messages.length;
-    List<Map<String, dynamic>> weightedMessages = [];
-
-    for (int i = 0; i < n; i++) {
-      double weight = (n - i) / ((n * (n + 1)) / 2);
-      weightedMessages.add({
-        'text': messages[i],
-        'weight': weight,
-      });
-    }
-    print(weightedMessages);
-    return weightedMessages;
   }
 
   void _loadInitialMessage() async {
@@ -375,7 +463,7 @@ class _ChatPageState extends State<ChatPage> {
           lastName: selectedMessage['author']['lastName'],
           imageUrl: selectedMessage['author']['imageUrl'],
         ),
-        createdAt: selectedMessage['createdAt'],
+        createdAt: DateTime.now().millisecondsSinceEpoch, // dynamic date
         id: selectedMessage['id'],
         text: selectedMessage['text'],
         type: types.MessageType.text,
@@ -388,7 +476,7 @@ class _ChatPageState extends State<ChatPage> {
           lastName: selectedMessage['author']['lastName'],
           imageUrl: selectedMessage['author']['imageUrl'],
         ),
-        createdAt: selectedMessage['createdAt'],
+        createdAt: DateTime.now().millisecondsSinceEpoch, // dynamic date
         id: selectedMessage['id'],
         metadata: {
           'type': 'audio',
@@ -400,17 +488,6 @@ class _ChatPageState extends State<ChatPage> {
     if (initialMessage != null) {
       _addMessage(initialMessage);
     }
-  }
-
-  void _loadMessages() async {
-    final response = await rootBundle.loadString('assets/messages.json');
-    final messages = (jsonDecode(response) as List)
-        .map((e) => types.Message.fromJson(e as Map<String, dynamic>))
-        .toList();
-
-    setState(() {
-      _messages = messages;
-    });
   }
 
   @override

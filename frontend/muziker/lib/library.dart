@@ -1,12 +1,71 @@
-import 'package:flutter/cupertino.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'audio_player_widget.dart';
 
-class LibraryPage extends StatelessWidget {
+class LibraryPage extends StatefulWidget {
   const LibraryPage({Key? key}) : super(key: key);
 
   @override
+  _LibraryPageState createState() => _LibraryPageState();
+}
+
+class _LibraryPageState extends State<LibraryPage> {
+  String searchQuery = "";
+  List<Map<String, dynamic>> musicList = [];
+  User? _firebaseUser = FirebaseAuth.instance.currentUser;
+  AudioPlayerWidget? _audioPlayerWidget;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchMusicList();
+  }
+
+  Future<void> fetchMusicList() async {
+    if (_firebaseUser != null) {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('musics')
+          .where('uid', isEqualTo: _firebaseUser!.uid)
+          .get();
+
+      setState(() {
+        musicList = querySnapshot.docs
+            .map((doc) => {
+          'name': doc['name'],
+          'uri': doc['uri'],
+        })
+            .toList();
+      });
+    }
+  }
+
+  void _onSearch(String query) {
+    setState(() {
+      searchQuery = query.toLowerCase();
+    });
+  }
+
+  List<Map<String, dynamic>> get filteredMusicList {
+    if (searchQuery.isEmpty) {
+      return musicList;
+    } else {
+      return musicList
+          .where((music) =>
+          music['name'].toLowerCase().contains(searchQuery))
+          .toList();
+    }
+  }
+
+  void _onMusicTap(String uri) {
+    setState(() {
+      _audioPlayerWidget = AudioPlayerWidget(url: uri);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(// Dark background from the theme
+    return Scaffold(
       appBar: AppBar(
         title: Text('Library'),
         actions: [
@@ -33,53 +92,37 @@ class LibraryPage extends StatelessWidget {
                 prefixIcon: Icon(Icons.search, color: Colors.white),
               ),
               style: TextStyle(color: Colors.white),
+              onChanged: _onSearch,
             ),
           ),
           Expanded(
-            child: ListView(
-              children: [
-                ListTile(
+            child: ListView.builder(
+              itemCount: filteredMusicList.length,
+              itemBuilder: (context, index) {
+                final music = filteredMusicList[index];
+                return ListTile(
                   leading: Icon(Icons.music_note, color: Colors.purpleAccent),
-                  title: Text('Sunset Vibes, Latin', style: TextStyle(color: Colors.white)),
-                  trailing: Icon(Icons.favorite_border, color: Colors.purpleAccent),
-                ),
-                ListTile(
-                  leading: Icon(Icons.music_note, color: Colors.purpleAccent),
-                  title: Text('More Drums', style: TextStyle(color: Colors.white)),
-                  trailing: Icon(Icons.favorite_border, color: Colors.purpleAccent),
-                ),
-                ListTile(
-                  leading: Icon(Icons.music_note, color: Colors.purpleAccent),
-                  title: Text('Smoother, more synths', style: TextStyle(color: Colors.white)),
-                  trailing: Icon(Icons.favorite_border, color: Colors.purpleAccent),
-                ),
-              ],
+                  title: Text(music['name'],
+                      style: TextStyle(color: Colors.white)),
+                  trailing: Icon(Icons.favorite_border,
+                      color: Colors.purpleAccent),
+                  onTap: () => _onMusicTap(music['uri']),
+                );
+              },
             ),
           ),
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Color(0xFF240046), // Slightly lighter background for the player controls
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Icon(Icons.skip_previous, color: Colors.purpleAccent, size: 36),
-                Icon(Icons.play_arrow, color: Colors.purpleAccent, size: 36),
-                Icon(Icons.skip_next, color: Colors.purpleAccent, size: 36),
-                // Include a custom icon for music wave here
-                Container(
-                  height: 50,
-                  width: 50,
-                  child: Image.asset('assets/music_wave_icon.png'), // Your icon file
+          if (_audioPlayerWidget != null)
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Color(0xFF240046), // Slightly lighter background for the player controls
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
                 ),
-              ],
+              ),
+              child: _audioPlayerWidget!,
             ),
-          )
         ],
       ),
     );
