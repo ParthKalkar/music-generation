@@ -248,8 +248,8 @@ class _ChatPageState extends State<ChatPage> {
     final region = 'eu-central-1';
     final endpoint = 'https://$s3Bucket.s3.$region.amazonaws.com/$filePath';
 
-    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-    const awsSecretKey = '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';
+    const awsAccessKey = '';
+    const awsSecretKey = '';
     final credentialsProvider = AWSCredentialsProvider(
         AWSCredentials(awsAccessKey, awsSecretKey)
     );
@@ -293,8 +293,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<String> _callSageMaker(String s3Uri) async {
-    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-    const awsSecretKey = '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';
+    const awsAccessKey = '';
+    const awsSecretKey = '';
     final region = 'eu-central-1';
     final endpoint = 'https://runtime.sagemaker.eu-central-1.amazonaws.com/endpoints/$modelName/async-invocations';
 
@@ -355,8 +355,8 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<String> _pollSageMakerResult(String outputUri) async {
-    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-    const awsSecretKey = '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';
+    const awsAccessKey = '';
+    const awsSecretKey = '';
     final region = 'eu-central-1';
 
     final credentialsProvider = AWSCredentialsProvider(
