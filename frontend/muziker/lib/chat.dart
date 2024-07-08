@@ -24,6 +24,8 @@ import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const modelName = 'musicgen-small-v1-asyc-2024-07-07-18-13-00-613';
+const k1 = '';
+const k2 = '';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -248,10 +250,8 @@ class _ChatPageState extends State<ChatPage> {
     final region = 'eu-central-1';
     final endpoint = 'https://$s3Bucket.s3.$region.amazonaws.com/$filePath';
 
-    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-    const awsSecretKey = '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';
     final credentialsProvider = AWSCredentialsProvider(
-        AWSCredentials(awsAccessKey, awsSecretKey)
+        AWSCredentials(k1, k2)
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
@@ -293,13 +293,12 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<String> _callSageMaker(String s3Uri) async {
-    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-    const awsSecretKey = '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';
+
     final region = 'eu-central-1';
     final endpoint = 'https://runtime.sagemaker.eu-central-1.amazonaws.com/endpoints/$modelName/async-invocations';
 
     final credentialsProvider = AWSCredentialsProvider(
-        AWSCredentials(awsAccessKey, awsSecretKey)
+        AWSCredentials(k1, k2)
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
@@ -355,12 +354,11 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<String> _pollSageMakerResult(String outputUri) async {
-    const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-    const awsSecretKey = '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';
+
     final region = 'eu-central-1';
 
     final credentialsProvider = AWSCredentialsProvider(
-        AWSCredentials(awsAccessKey, awsSecretKey)
+        AWSCredentials(k1, k2)
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
