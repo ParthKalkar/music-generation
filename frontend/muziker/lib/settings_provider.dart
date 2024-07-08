@@ -27,4 +27,14 @@ class SettingsProvider with ChangeNotifier {
     _settings.temperature = value;
     notifyListeners();
   }
+
+  void updateNumWords(int value) {
+    _settings.numWords = value;
+    notifyListeners();
+  }
+
+  void updateWeightMethod(String value) {
+    _settings.weightMethod = value;
+    notifyListeners();
+  }
 }

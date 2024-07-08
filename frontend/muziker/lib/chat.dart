@@ -24,8 +24,10 @@ import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const modelName = 'musicgen-small-v1-asyc-2024-07-07-18-13-00-613';
-const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-const awsSecretKey = '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';
+// const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
+// const awsSecretKey = '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';
+const awsAccessKey = '';
+const awsSecretKey = '';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -211,11 +213,57 @@ class _ChatPageState extends State<ChatPage> {
 
     _addMessage(textMessage);
 
+    // Collect all user messages
+    List<String> userMessages = _messages
+        .where((msg) => msg is types.TextMessage && msg.author.id == _firebaseUser?.uid)
+        .map((msg) => (msg as types.TextMessage).text)
+        .toList();
+
+
     final settings = Provider.of<SettingsProvider>(context, listen: false).settings;
+
+    // Calculate weights
+    List<Map<String, dynamic>> weightedMessages = _calculateWeights(userMessages, settings.weightMethod);
+
+
+    // Use appropriate URL depending on the platform
+    final url = (Platform.isAndroid)
+        ? 'http://10.0.2.2:5000/significant-words'
+        : 'http://127.0.0.1:5000/significant-words';
+
+    // Send to backend
+
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'text_weight_pairs': weightedMessages,
+        'num_words': settings.numWords,
+      }),
+    );
+
+    String combinedKeywords = '';
+    print('a');
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      List<String> significantWords = List<String>.from(data['significant_words']);
+      print('Significant words: $significantWords');
+
+      // Combine significant words into a single string
+      String combinedKeywords = significantWords.join(" ");
+      print('Combined Keywords: $combinedKeywords');
+
+    } else {
+      throw Exception('Failed to load significant words');
+    }
+
+
+
 
     // Create JSON payload
     final jsonPayload = jsonEncode({
-      "texts": [message.text],
+      "texts": combinedKeywords.isNotEmpty ? [combinedKeywords] : [message.text],
       "bucket_name": 'sagemaker-eu-central-1-471112987728',
       "generation_params": {
         "guidance_scale": settings.guidanceScale,
@@ -418,6 +466,7 @@ class _ChatPageState extends State<ChatPage> {
         'uid': user.uid,
         'uri': url,
         'name': name,
+        'isLiked': false
       });
     } else {
       print('No user is signed in');
@@ -443,6 +492,33 @@ class _ChatPageState extends State<ChatPage> {
 
     print(url);
     _addMessage(musicMessage);
+  }
+
+
+  List<Map<String, dynamic>> _calculateWeights(List<String> messages, String weightMethod) {
+    int n = messages.length;
+    List<Map<String, dynamic>> weightedMessages = [];
+    print(messages);
+    for (int i = 0; i < n; i++) {
+      double weight;
+      switch (weightMethod) {
+        case 'logarithmic':
+          weight = log(n - i + 1);
+          break;
+        case 'exponential':
+          weight = pow(2, n - i - 1) / (pow(2, n) - 1);
+          break;
+        case 'balanced':
+        default:
+          weight = (n - i) / ((n * (n + 1)) / 2);
+          break;
+      }
+      weightedMessages.add({
+        'text': messages[i],
+        'weight': weight,
+      });
+    }
+    return weightedMessages;
   }
 
   void _loadInitialMessage() async {

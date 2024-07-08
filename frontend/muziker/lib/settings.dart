@@ -13,6 +13,8 @@ class SettingsPage extends StatelessWidget {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final settings = settingsProvider.settings;
 
+    final themeManager = Provider.of<ThemeManager>(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: Padding(
@@ -22,9 +24,9 @@ class SettingsPage extends StatelessWidget {
           children: [
             const Text('Theme Settings'),
             Switch(
-              value: Provider.of<ThemeManager>(context).isDark,
+              value: themeManager.isDark,
               onChanged: (value) {
-                Provider.of<ThemeManager>(context, listen: false).toggleTheme();
+                themeManager.toggleTheme();
               },
             ),
             if (!isOffline) ...[
@@ -97,8 +99,71 @@ class SettingsPage extends StatelessWidget {
                   settingsProvider.updateTemperature(value);
                 },
               ),
+              const SizedBox(height: 20),
+              const Text('Number of Words'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.remove),
+                    onPressed: () {
+                      if (settings.numWords > 1) {
+                        settingsProvider.updateNumWords(settings.numWords - 1);
+                      }
+                    },
+                  ),
+                  Text(settings.numWords.toString()),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: () {
+                      settingsProvider.updateNumWords(settings.numWords + 1);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Text('Weight Method'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildWeightMethodButton(
+                    context,
+                    'Logarithmic',
+                    settings.weightMethod == 'logarithmic',
+                        () => settingsProvider.updateWeightMethod('logarithmic'),
+                  ),
+                  _buildWeightMethodButton(
+                    context,
+                    'Exponential',
+                    settings.weightMethod == 'exponential',
+                        () => settingsProvider.updateWeightMethod('exponential'),
+                  ),
+                  _buildWeightMethodButton(
+                    context,
+                    'Balanced',
+                    settings.weightMethod == 'balanced',
+                        () => settingsProvider.updateWeightMethod('balanced'),
+                  ),
+                ],
+              ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeightMethodButton(BuildContext context, String label, bool isSelected, VoidCallback onPressed) {
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+    return ElevatedButton(
+      onPressed: onPressed,
+      child: Text(label),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: isSelected ? Colors.white : themeManager.themeData.textTheme.button!.color, backgroundColor: isSelected ? themeManager.themeData.primaryColor : themeManager.themeData.disabledColor,
+        elevation: 5,
+        shadowColor: Colors.black45,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
         ),
       ),
     );

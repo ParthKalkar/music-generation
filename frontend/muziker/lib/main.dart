@@ -32,6 +32,8 @@ class MyApp extends StatelessWidget {
             maxNewTokens: 250,
             doSample: true,
             temperature: 0.8,
+            numWords: 5,
+            weightMethod: "balanced"
           )),
         ),
       ],

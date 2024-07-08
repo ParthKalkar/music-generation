@@ -13,6 +13,7 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   String searchQuery = "";
   List<Map<String, dynamic>> musicList = [];
+  bool showLikedOnly = false;
   User? _firebaseUser = FirebaseAuth.instance.currentUser;
   AudioPlayerWidget? _audioPlayerWidget;
 
@@ -32,8 +33,10 @@ class _LibraryPageState extends State<LibraryPage> {
       setState(() {
         musicList = querySnapshot.docs
             .map((doc) => {
+          'id': doc.id,
           'name': doc['name'],
           'uri': doc['uri'],
+          'isLiked': doc['isLiked'] ?? false,
         })
             .toList();
       });
@@ -47,19 +50,35 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   List<Map<String, dynamic>> get filteredMusicList {
-    if (searchQuery.isEmpty) {
-      return musicList;
-    } else {
-      return musicList
+    var list = musicList;
+    if (searchQuery.isNotEmpty) {
+      list = list
           .where((music) =>
           music['name'].toLowerCase().contains(searchQuery))
           .toList();
     }
+    if (showLikedOnly) {
+      list = list.where((music) => music['isLiked'] == true).toList();
+    }
+    return list;
   }
 
   void _onMusicTap(String uri) {
     setState(() {
       _audioPlayerWidget = AudioPlayerWidget(url: uri);
+    });
+  }
+
+  void _toggleLike(String id, bool isLiked) async {
+    await FirebaseFirestore.instance.collection('musics').doc(id).update({
+      'isLiked': !isLiked,
+    });
+    fetchMusicList();
+  }
+
+  void _toggleFilter() {
+    setState(() {
+      showLikedOnly = !showLikedOnly;
     });
   }
 
@@ -70,8 +89,8 @@ class _LibraryPageState extends State<LibraryPage> {
         title: Text('Library'),
         actions: [
           IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {}, // Placeholder for menu button action
+            icon: Icon(showLikedOnly ? Icons.favorite : Icons.menu),
+            onPressed: _toggleFilter, // Toggle filter for liked musics
           ),
         ],
       ),
@@ -104,8 +123,15 @@ class _LibraryPageState extends State<LibraryPage> {
                   leading: Icon(Icons.music_note, color: Colors.purpleAccent),
                   title: Text(music['name'],
                       style: TextStyle(color: Colors.white)),
-                  trailing: Icon(Icons.favorite_border,
-                      color: Colors.purpleAccent),
+                  trailing: IconButton(
+                    icon: Icon(
+                      music['isLiked']
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: Colors.purpleAccent,
+                    ),
+                    onPressed: () => _toggleLike(music['id'], music['isLiked']),
+                  ),
                   onTap: () => _onMusicTap(music['uri']),
                 );
               },
@@ -115,7 +141,7 @@ class _LibraryPageState extends State<LibraryPage> {
             Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Color(0xFF240046), // Slightly lighter background for the player controls
+                color: Color(0xFF240046),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(10),
                   topRight: Radius.circular(10),
