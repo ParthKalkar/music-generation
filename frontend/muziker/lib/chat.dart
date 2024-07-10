@@ -23,11 +23,11 @@ import 'settings_provider.dart';
 import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-const modelName = 'musicgen-small-v1-asyc-2024-07-07-18-13-00-613';
-// const awsAccessKey = 'AKIAW3MEFWRICTPDYB5I';
-// const awsSecretKey = '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';
-const awsAccessKey = '';
-const awsSecretKey = '';
+const modelName = 'musicgen-small-v1-asyc-2024-07-10-13-27-57-026';
+const awsAccessKey = 'AKIAW3MEFWRIKGK36M6M';
+const awsSecretKey = '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';
+// const awsAccessKey = '';
+// const awsSecretKey = '';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -442,7 +442,8 @@ class _ChatPageState extends State<ChatPage> {
         final jsonResponse = jsonDecode(responseBody);
         print("SageMaker result: $jsonResponse");
         final s3Uri = jsonResponse['generated_output_s3'];
-        final output = s3ToHttp(s3Uri);
+        // final output = s3ToHttp(s3Uri);
+        final output = s3Uri;
         print(output);
 
         return output;
