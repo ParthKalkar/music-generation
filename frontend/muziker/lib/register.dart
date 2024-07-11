@@ -102,6 +102,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       'maxNewTokens': 250,
                       'temperature': 0.8,
                       'numWords': 5,
+                      'doSample': true,
+                      'weightMethod': 'balanced',
                     });
 
                     Navigator.pushReplacementNamed(context, '/home');

@@ -247,6 +247,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   num totalMaxNewTokens = 0;
                   double totalTemperature = 0;
                   num totalNumWords = 0;
+                  int trueCount = 0;
+                  int falseCount = 0;
+                  Map<String, int> weightMethodCounts = {
+                    'logarithmic': 0,
+                    'exponential': 0,
+                    'balanced': 0,
+                  };
                   int count = snapshot.docs.length;
 
                   for (var doc in snapshot.docs) {
@@ -254,6 +261,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     totalMaxNewTokens += doc['maxNewTokens'];
                     totalTemperature += doc['temperature'];
                     totalNumWords += doc['numWords'];
+                    if (doc['doSample']) {
+                      trueCount++;
+                    } else {
+                      falseCount++;
+                    }
+                    weightMethodCounts[doc['weightMethod']] =
+                        (weightMethodCounts[doc['weightMethod']] ?? 0) + 1;
                   }
 
                   double avgGuidanceScale = totalGuidanceScale / count;
@@ -261,13 +275,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   double avgTemperature = totalTemperature / count;
                   double avgNumWords = totalNumWords / count;
 
+                  String mostOccurringWeightMethod = weightMethodCounts.entries
+                      .reduce((a, b) => a.value > b.value ? a : b)
+                      .key;
+                  bool mostOccurringDoSample = trueCount > falseCount;
+
                   settingsProvider.updateSettings(GenerationSettings(
                     guidanceScale: avgGuidanceScale,
                     maxNewTokens: avgMaxNewTokens.round(),
-                    doSample: settings.doSample,
+                    doSample: mostOccurringDoSample,
                     temperature: avgTemperature,
                     numWords: avgNumWords.round(),
-                    weightMethod: settings.weightMethod,
+                    weightMethod: mostOccurringWeightMethod,
                   ));
 
                   _onSettingsChanged();

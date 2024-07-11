@@ -38,10 +38,10 @@ class _UserLoginPageState extends State<UserLoginPage> {
         Provider.of<SettingsProvider>(context, listen: false).updateSettings(GenerationSettings(
           guidanceScale: data['guidanceScale']?.toDouble() ?? 3.0,
           maxNewTokens: data['maxNewTokens'] ?? 250,
-          doSample: true, // Assuming doSample is always true
+          doSample: data['doSample'] ?? true,
           temperature: data['temperature']?.toDouble() ?? 0.8,
           numWords: data['numWords'] ?? 5,
-          weightMethod: "balanced", // Assuming weightMethod is always balanced
+          weightMethod: data['weightMethod'] ?? 'balanced',
         ));
       }
     }
