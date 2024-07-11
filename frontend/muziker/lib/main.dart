@@ -8,6 +8,8 @@ import 'user_login.dart';
 import 'settings_provider.dart';
 import 'generation_settings.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,12 +30,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<ThemeManager>(create: (_) => themeManager),
         ChangeNotifierProvider<SettingsProvider>(
           create: (_) => SettingsProvider(GenerationSettings(
-            guidanceScale: 3,
-            maxNewTokens: 250,
-            doSample: true,
-            temperature: 0.8,
-            numWords: 5,
-            weightMethod: "balanced"
+              guidanceScale: 3,
+              maxNewTokens: 250,
+              doSample: true,
+              temperature: 0.8,
+              numWords: 5,
+              weightMethod: "balanced"
           )),
         ),
       ],

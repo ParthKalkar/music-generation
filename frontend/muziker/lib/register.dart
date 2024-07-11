@@ -96,6 +96,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       'createdAt': Timestamp.now(),
                     });
 
+                    // Assign default parameters to the new user
+                    await FirebaseFirestore.instance.collection('params').doc(userCredential.user?.uid).set({
+                      'guidanceScale': 3,
+                      'maxNewTokens': 250,
+                      'temperature': 0.8,
+                      'numWords': 5,
+                    });
+
                     Navigator.pushReplacementNamed(context, '/home');
                   } on FirebaseAuthException catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +116,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   textStyle: TextStyle(fontSize: 16),
-                  elevation: 5.0,  // Add shadow effect
+                  elevation: 5.0,
                 ),
                 child: Text('Register'),
               ),

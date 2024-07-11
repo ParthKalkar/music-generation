@@ -37,4 +37,9 @@ class SettingsProvider with ChangeNotifier {
     _settings.weightMethod = value;
     notifyListeners();
   }
+
+  void updateSettings(GenerationSettings settings) {
+    _settings = settings;
+    notifyListeners();
+  }
 }

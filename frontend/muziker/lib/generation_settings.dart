@@ -12,6 +12,17 @@ class GenerationSettings {
     required this.doSample,
     required this.temperature,
     required this.numWords,
-    required this.weightMethod
+    required this.weightMethod,
   });
+
+  GenerationSettings copy() {
+    return GenerationSettings(
+      guidanceScale: this.guidanceScale,
+      maxNewTokens: this.maxNewTokens,
+      doSample: this.doSample,
+      temperature: this.temperature,
+      numWords: this.numWords,
+      weightMethod: this.weightMethod,
+    );
+  }
 }

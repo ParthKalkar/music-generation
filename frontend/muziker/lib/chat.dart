@@ -222,6 +222,8 @@ class _ChatPageState extends State<ChatPage> {
 
     final settings = Provider.of<SettingsProvider>(context, listen: false).settings;
 
+
+
     // Calculate weights
     List<Map<String, dynamic>> weightedMessages = _calculateWeights(userMessages, settings.weightMethod);
 
@@ -244,7 +246,6 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     String combinedKeywords = '';
-    print('a');
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       List<String> significantWords = List<String>.from(data['significant_words']);
@@ -272,7 +273,12 @@ class _ChatPageState extends State<ChatPage> {
         "temperature": settings.temperature,
       }
     });
-
+    print(settings.weightMethod);
+    print(settings.numWords);
+    print(settings.doSample);
+    print(settings.guidanceScale);
+    print(settings.maxNewTokens);
+    print(settings.temperature);
     // Generate a unique file name
     final fileName = 'payload_${DateTime.now().millisecondsSinceEpoch}.json';
     final filePath = 'musicgen_small/input_payload/$fileName';
