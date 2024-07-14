@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'chat.dart';
 import 'settings.dart';
@@ -18,25 +17,39 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final double buttonWidth = MediaQuery.of(context).size.width * 0.95;
     return Scaffold(
+      appBar: AppBar(title: const Text("Home"),
+      actions: <Widget>[
+        //logout
+                IconButton(
+                  onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                        (Route<dynamic> route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout)),
+
+        //settings
+                IconButton(onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: isOffline,)));               
+                  }, 
+                  
+                icon: const Icon(Icons.settings)),
+              ],
+      ),
       body: Stack(
         children: [
           // Add the background pattern
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.5,
-              child: Image.asset(
-                'assets/music_notes_pattern.jpg', // Add your pattern image asset
-                repeat: ImageRepeat.repeat,
-              ),
-            ),
-          ),
+          
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Image.asset('assets/logo.png', height: 200),  // Adjust size as necessary
+                  child: Image.asset('assets/Muziker_dark.png', height: 200),  // Adjust size as necessary
                 ),
                 if (!isOffline)
                   SizedBox(
@@ -82,58 +95,10 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: buttonWidth,
-                  height: buttonHeight,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: isOffline)));
-                    },
-                    icon: Icon(Icons.settings, size: 20),  // Larger icon size
-                    label: const Text(''),  // No text
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF4D057A),  // Set uniform color
-                      foregroundColor: Colors.white,  // Text color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),  // Rounded corners
-                      ),
-                      elevation: 10,  // Shadow elevation
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-          Positioned(
-            top: 40,
-            right: 20,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // Background color to make it stand out
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26, // Shadow color
-                    blurRadius: 10.0, // Softening the shadow
-                    spreadRadius: 1.0, // Extending the shadow
-                    offset: Offset(0.0, 5.0), // Moving the shadow
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: Icon(Icons.logout, color: Colors.red, size: 30), // Use a visible color
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                        (Route<dynamic> route) => false,
-                  );
-                },
-              ),
-            ),
-          ),
+          
         ],
       ),
     );

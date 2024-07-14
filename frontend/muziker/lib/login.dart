@@ -46,14 +46,6 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             decoration: BoxDecoration(
               color: Color(0xA6E0AAFF),
-              image: DecorationImage(
-                image: AssetImage('assets/wave_pattern.jpg'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.4), // Adjust the opacity
-                  BlendMode.dstATop,
-                ),
-              ),
             ),
             width: double.infinity,
             padding: EdgeInsets.all(20),
@@ -61,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 SizedBox(height: 40),
-                Image.asset('assets/logo.png'),
+                Image.asset('assets/Muziker_dark.png'),
                 Column(
                   children: [
                     SizedBox(

@@ -68,12 +68,6 @@ class _LibraryPageState extends State<LibraryPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Library'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {}, // Placeholder for menu button action
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -81,7 +75,7 @@ class _LibraryPageState extends State<LibraryPage> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: "What kind of music will you make?",
+                hintText: "Search your music:",
                 hintStyle: TextStyle(color: Colors.white54),
                 filled: true,
                 fillColor: Colors.white24,
@@ -96,7 +90,7 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: filteredMusicList.length > 0 ? ListView.builder(
               itemCount: filteredMusicList.length,
               itemBuilder: (context, index) {
                 final music = filteredMusicList[index];
@@ -109,7 +103,8 @@ class _LibraryPageState extends State<LibraryPage> {
                   onTap: () => _onMusicTap(music['uri']),
                 );
               },
-            ),
+            ):
+            const Center(child: Text("You haven't created anything yet!"),)
           ),
           if (_audioPlayerWidget != null)
             Container(
