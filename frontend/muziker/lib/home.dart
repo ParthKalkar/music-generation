@@ -78,8 +78,6 @@ class HomePage extends StatelessWidget {
                         style: TextStyle(fontSize: 16),  // Larger text size
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,  // Set uniform color
-                        foregroundColor: Colors.white,  // Text color
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),  // Rounded corners
                         ),
@@ -100,8 +98,6 @@ class HomePage extends StatelessWidget {
                       style: TextStyle(fontSize: 16),  // Larger text size
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,  // Set uniform color
-                      foregroundColor: Colors.white,  // Text color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),  // Rounded corners
                       ),

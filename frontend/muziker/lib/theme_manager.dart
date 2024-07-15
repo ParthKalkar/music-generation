@@ -41,10 +41,9 @@ final ThemeData darkTheme = ThemeData(
   scaffoldBackgroundColor: Color(0xFF3C096C), // vivid violet
   colorScheme: ColorScheme.dark(
     shadow:  Colors.black,
-    primary: Color(0xFF10002B), // deep purple
+    primary: Color(0xFF9D4EDD), // deep purple
     secondary: Color(0xFF240046), // previously 'accentColor', now 'secondary'
-    background: Color(0xFF3C096C), // vivid violet
-    surface: Color(0xFF9D4EDD), // used for cards, sheets, and other surfaces
+    surface: Color(0xFF3C096C), // vivid violet
     onPrimary: Colors.white, // text color on primary
     onSecondary: Colors.white, // text color on secondary
   ),
@@ -65,8 +64,7 @@ final ThemeData lightTheme = ThemeData(
     shadow: Color(0xFF10002B),
     primary: Color(0xFF5A189A), // vivid violet
     secondary: Color(0xFF7B2CBF), // soft lavender, replacing the old accent color
-    background: Color(0xFFE0AAFF), // very light purple used for backgrounds
-    surface: Color(0xFFC77DFF), // used for cards, sheets, and other surfaces
+    surface: Color(0xFFE0AAFF), // used for cards, sheets, and other surfaces
     onPrimary: Colors.white, // text color on primary
     onSecondary: Colors.black, // text color on secondary
   ),

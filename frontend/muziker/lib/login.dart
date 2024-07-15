@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
             glowIntensity: 0.9,),
           Container(
             decoration: BoxDecoration(
-              color: Color(0xA6E0AAFF),
+              color: Theme.of(context).colorScheme.surface,
             ),
             width: double.infinity,
             padding: EdgeInsets.all(20),

@@ -115,11 +115,11 @@ class _LibraryPageState extends State<LibraryPage> {
               itemBuilder: (context, index) {
                 final music = filteredMusicList[index];
                 return ListTile(
-                  leading: Icon(Icons.music_note, color: Colors.purpleAccent),
+                  leading: Icon(Icons.music_note, color: Theme.of(context).colorScheme.primary),
                   title: Text(music['name'],
-                      style: TextStyle(color: Colors.white)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
                   trailing: Icon(Icons.favorite_border,
-                      color: Colors.purpleAccent),
+                      color: Theme.of(context).colorScheme.primary),
                   onTap: () => _onMusicTap(music['uri']),
                 );
               },
