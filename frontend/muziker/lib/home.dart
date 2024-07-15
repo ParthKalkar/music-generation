@@ -45,7 +45,9 @@ class HomePage extends StatelessWidget {
         children: [
           // Add the background animation 
           Metaballs(
-            color: Theme.of(context).colorScheme.secondary,
+            color: Color(0xFFAA0EDD),
+            gradient: LinearGradient(colors: [Color(0xFF23192C),Color(0xFF5A189A),Color(0xFFF59AE0),Color(0xFFA8CEF1),], 
+              begin: Alignment.topLeft, end: Alignment.bottomRight),
             effect: MetaballsEffect.ripple(
               growthFactor: 1,
              ),
