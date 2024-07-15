@@ -4,6 +4,7 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'user_login.dart';
 import 'register.dart';
 import 'home.dart';
+import 'package:metaballs/metaballs.dart';
 
 const IconData signal_wifi_connected_no_internet_4_rounded = IconData(0xf0187, fontFamily: 'MaterialIcons');
 
@@ -43,26 +44,30 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
+          Metaballs(
+            color: Theme.of(context).colorScheme.secondary,
+            effect: MetaballsEffect.ripple(
+              growthFactor: 1,
+             ),
+            metaballs: 30,
+            animationDuration: const Duration(milliseconds: 200),
+            speedMultiplier: 1,
+            bounceStiffness: 3,
+            minBallRadius: 20,
+            maxBallRadius: 65,
+            glowRadius: 0.8,
+            glowIntensity: 0.9,),
           Container(
-            decoration: BoxDecoration(
-              color: Color(0xA6E0AAFF),
-              image: DecorationImage(
-                image: AssetImage('assets/wave_pattern.jpg'),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.4), // Adjust the opacity
-                  BlendMode.dstATop,
-                ),
-              ),
-            ),
             width: double.infinity,
             padding: EdgeInsets.all(20),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                
                 SizedBox(height: 40),
-                Image.asset('assets/logo.png'),
+                Image.asset('assets/Muziker_dark.png'),
                 Column(
+                  //sign in buttons
                   children: [
                     SizedBox(
                       width: 250,

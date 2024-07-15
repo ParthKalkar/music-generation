@@ -2,10 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'audio_player_widget.dart';
+import 'settings.dart';
+import 'login.dart'; 
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({Key? key}) : super(key: key);
-
   @override
   _LibraryPageState createState() => _LibraryPageState();
 }
@@ -66,14 +67,27 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Library'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {}, // Placeholder for menu button action
-          ),
-        ],
+      appBar: AppBar(title: const Text("Library"),
+      actions: <Widget>[
+        //logout
+                IconButton(
+                  onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                        (Route<dynamic> route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout)),
+
+        //settings
+                IconButton(onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: true,)));               
+                  }, 
+                  
+                icon: const Icon(Icons.settings)),
+              ],
       ),
       body: Column(
         children: [
@@ -81,7 +95,7 @@ class _LibraryPageState extends State<LibraryPage> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: "What kind of music will you make?",
+                hintText: "Search your music:",
                 hintStyle: TextStyle(color: Colors.white54),
                 filled: true,
                 fillColor: Colors.white24,
@@ -96,20 +110,21 @@ class _LibraryPageState extends State<LibraryPage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: filteredMusicList.length > 0 ? ListView.builder(
               itemCount: filteredMusicList.length,
               itemBuilder: (context, index) {
                 final music = filteredMusicList[index];
                 return ListTile(
-                  leading: Icon(Icons.music_note, color: Colors.purpleAccent),
+                  leading: Icon(Icons.music_note, color: Theme.of(context).colorScheme.primary),
                   title: Text(music['name'],
-                      style: TextStyle(color: Colors.white)),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
                   trailing: Icon(Icons.favorite_border,
-                      color: Colors.purpleAccent),
+                      color: Theme.of(context).colorScheme.primary),
                   onTap: () => _onMusicTap(music['uri']),
                 );
               },
-            ),
+            ):
+            const Center(child: Text("You haven't created anything yet!"),)
           ),
           if (_audioPlayerWidget != null)
             Container(

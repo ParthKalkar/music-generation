@@ -37,15 +37,15 @@ class ThemeManager with ChangeNotifier {
 
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
-  primaryColor: Color(0xFF10002B), // deep purple, you can still define it if used directly elsewhere in your app
-  scaffoldBackgroundColor: Color(0xFF3C096C), // vivid violet
+  primaryColor: Color(0xFF23192C), // deep purple, you can still define it if used directly elsewhere in your app
+  scaffoldBackgroundColor: Color(0xFF5A189A), // vivid violet
   colorScheme: ColorScheme.dark(
-    primary: Color(0xFF10002B), // deep purple
-    secondary: Color(0xFF240046), // previously 'accentColor', now 'secondary'
-    background: Color(0xFF3C096C), // vivid violet
-    surface: Color(0xFF9D4EDD), // used for cards, sheets, and other surfaces
+    shadow:  Colors.black,
+    primary: Color(0xFF32095B), // deep purple
+    secondary: Color(0xFFEBD2FF), // previously 'accentColor', now 'secondary'
+    surface: Color(0xFF9D4EDD), // vivid violet
     onPrimary: Colors.white, // text color on primary
-    onSecondary: Colors.white, // text color on secondary
+    onSecondary: Color(0xFF23192C), // text color on secondary
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
@@ -59,26 +59,22 @@ final ThemeData darkTheme = ThemeData(
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primaryColor: Color(0xFF5A189A), // vivid violet, can be used directly in other parts of your app
-  scaffoldBackgroundColor: Color(0xFFE0AAFF), // very light purple
-  colorScheme: ColorScheme.light(
-    primary: Color(0xFF5A189A), // vivid violet
-    secondary: Color(0xFF7B2CBF), // soft lavender, replacing the old accent color
-    background: Color(0xFFE0AAFF), // very light purple used for backgrounds
-    surface: Color(0xFFC77DFF), // used for cards, sheets, and other surfaces
-    onPrimary: Colors.white, // text color on primary
-    onSecondary: Colors.black, // text color on secondary
+  scaffoldBackgroundColor: Color(0xFFEBD2FF), // very light purple
+  colorScheme: ColorScheme.dark(
+    shadow:  Colors.black,
+    secondary: Color(0xFF32095B), // deep purple
+    primary: Color(0xFFD092FF), // previously 'accentColor', now 'secondary'
+    surface: Color(0xFF9D4EDD), // vivid violet
+    onSecondary: Colors.white, // text color on primary
+    onPrimary: Color(0xFF23192C), // text color on secondary
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
-      backgroundColor: MaterialStateProperty.all(Color(0xFF7B2CBF)), // soft lavender
+      backgroundColor: MaterialStateProperty.all(Color(0xFF9D4EDD)), // soft lavender
       foregroundColor: MaterialStateProperty.all(Colors.white), // text color
     ),
   ),
-  textButtonTheme: TextButtonThemeData(
-    style: ButtonStyle(
-      foregroundColor: MaterialStateProperty.all(Color(0xFF5A189A)), // vivid violet, primarily for text
-    ),
-  ),
+  
 );
 
 

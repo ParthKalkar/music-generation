@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'chat.dart';
 import 'settings.dart';
 import 'library.dart';
-import 'login.dart'; // Assuming this is the login page file
+import 'login.dart'; 
+import 'package:metaballs/metaballs.dart';
 
 class HomePage extends StatelessWidget {
   final bool isOffline;
@@ -17,26 +17,55 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double buttonWidth = MediaQuery.of(context).size.width * 0.95;
+    
     return Scaffold(
+      appBar: AppBar(title: const Text("Home"),
+      actions: <Widget>[
+        //logout
+                IconButton(
+                  onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                        (Route<dynamic> route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout)),
+
+        //settings
+                IconButton(onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: isOffline,)));               
+                  }, 
+                  
+                icon: const Icon(Icons.settings)),
+              ],
+      ),
       body: Stack(
         children: [
-          // Add the background pattern
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.5,
-              child: Image.asset(
-                'assets/music_notes_pattern.jpg', // Add your pattern image asset
-                repeat: ImageRepeat.repeat,
-              ),
-            ),
-          ),
+          // Add the background animation 
+          Metaballs(
+            color: Color(0xFFAA0EDD),
+            gradient: LinearGradient(colors: [Color(0xFF23192C),Color(0xFF5A189A),Color(0xFFF59AE0),Color(0xFFA8CEF1),], 
+              begin: Alignment.topLeft, end: Alignment.bottomRight),
+            effect: MetaballsEffect.ripple(
+              growthFactor: 1,
+             ),
+            metaballs: 30,
+            animationDuration: const Duration(milliseconds: 200),
+            speedMultiplier: 1,
+            bounceStiffness: 3,
+            minBallRadius: 20,
+            maxBallRadius: 80,
+            glowRadius: 0.8,
+            glowIntensity: 0.9,),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 20),
-                  child: Image.asset('assets/logo.png', height: 200),  // Adjust size as necessary
+                  child: Image.asset('assets/Muziker_dark.png', height: 200),  // Adjust size as necessary
                 ),
                 if (!isOffline)
                   SizedBox(
@@ -51,8 +80,6 @@ class HomePage extends StatelessWidget {
                         style: TextStyle(fontSize: 16),  // Larger text size
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF4D057A),  // Set uniform color
-                        foregroundColor: Colors.white,  // Text color
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),  // Rounded corners
                         ),
@@ -73,28 +100,6 @@ class HomePage extends StatelessWidget {
                       style: TextStyle(fontSize: 16),  // Larger text size
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF4D057A),  // Set uniform color
-                      foregroundColor: Colors.white,  // Text color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),  // Rounded corners
-                      ),
-                      elevation: 10,  // Shadow elevation
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: buttonWidth,
-                  height: buttonHeight,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: isOffline)));
-                    },
-                    icon: Icon(Icons.settings, size: 20),  // Larger icon size
-                    label: const Text(''),  // No text
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF4D057A),  // Set uniform color
-                      foregroundColor: Colors.white,  // Text color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),  // Rounded corners
                       ),
@@ -105,35 +110,7 @@ class HomePage extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            top: 40,
-            right: 20,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // Background color to make it stand out
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26, // Shadow color
-                    blurRadius: 10.0, // Softening the shadow
-                    spreadRadius: 1.0, // Extending the shadow
-                    offset: Offset(0.0, 5.0), // Moving the shadow
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: Icon(Icons.logout, color: Colors.red, size: 30), // Use a visible color
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                        (Route<dynamic> route) => false,
-                  );
-                },
-              ),
-            ),
-          ),
+          
         ],
       ),
     );
