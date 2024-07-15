@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'chat.dart';
 import 'settings.dart';
 import 'library.dart';
-import 'login.dart'; // Assuming this is the login page file
+import 'login.dart'; 
+import 'package:metaballs/metaballs.dart';
 
 class HomePage extends StatelessWidget {
   final bool isOffline;
@@ -16,6 +17,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double buttonWidth = MediaQuery.of(context).size.width * 0.95;
+    
     return Scaffold(
       appBar: AppBar(title: const Text("Home"),
       actions: <Widget>[
@@ -41,8 +43,20 @@ class HomePage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Add the background pattern
-          
+          // Add the background animation 
+          Metaballs(
+            color: Theme.of(context).colorScheme.secondary,
+            effect: MetaballsEffect.ripple(
+              growthFactor: 1,
+             ),
+            metaballs: 30,
+            animationDuration: const Duration(milliseconds: 200),
+            speedMultiplier: 1,
+            bounceStiffness: 3,
+            minBallRadius: 20,
+            maxBallRadius: 80,
+            glowRadius: 0.8,
+            glowIntensity: 0.9,),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -64,7 +78,7 @@ class HomePage extends StatelessWidget {
                         style: TextStyle(fontSize: 16),  // Larger text size
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF4D057A),  // Set uniform color
+                        backgroundColor: Theme.of(context).primaryColor,  // Set uniform color
                         foregroundColor: Colors.white,  // Text color
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),  // Rounded corners
@@ -86,7 +100,7 @@ class HomePage extends StatelessWidget {
                       style: TextStyle(fontSize: 16),  // Larger text size
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF4D057A),  // Set uniform color
+                      backgroundColor: Theme.of(context).primaryColor,  // Set uniform color
                       foregroundColor: Colors.white,  // Text color
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),  // Rounded corners

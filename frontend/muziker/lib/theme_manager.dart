@@ -40,6 +40,7 @@ final ThemeData darkTheme = ThemeData(
   primaryColor: Color(0xFF10002B), // deep purple, you can still define it if used directly elsewhere in your app
   scaffoldBackgroundColor: Color(0xFF3C096C), // vivid violet
   colorScheme: ColorScheme.dark(
+    shadow:  Colors.black,
     primary: Color(0xFF10002B), // deep purple
     secondary: Color(0xFF240046), // previously 'accentColor', now 'secondary'
     background: Color(0xFF3C096C), // vivid violet
@@ -61,6 +62,7 @@ final ThemeData lightTheme = ThemeData(
   primaryColor: Color(0xFF5A189A), // vivid violet, can be used directly in other parts of your app
   scaffoldBackgroundColor: Color(0xFFE0AAFF), // very light purple
   colorScheme: ColorScheme.light(
+    shadow: Color(0xFF10002B),
     primary: Color(0xFF5A189A), // vivid violet
     secondary: Color(0xFF7B2CBF), // soft lavender, replacing the old accent color
     background: Color(0xFFE0AAFF), // very light purple used for backgrounds
