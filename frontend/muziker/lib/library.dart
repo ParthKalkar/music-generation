@@ -2,10 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'audio_player_widget.dart';
+import 'settings.dart';
+import 'login.dart'; 
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({Key? key}) : super(key: key);
-
   @override
   _LibraryPageState createState() => _LibraryPageState();
 }
@@ -66,8 +67,27 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Library'),
+      appBar: AppBar(title: const Text("Library"),
+      actions: <Widget>[
+        //logout
+                IconButton(
+                  onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                        (Route<dynamic> route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout)),
+
+        //settings
+                IconButton(onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: true,)));               
+                  }, 
+                  
+                icon: const Icon(Icons.settings)),
+              ],
       ),
       body: Column(
         children: [

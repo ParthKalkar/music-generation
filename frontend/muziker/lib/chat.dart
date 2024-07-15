@@ -21,6 +21,8 @@ import 'package:provider/provider.dart';
 import 'audio_player_widget.dart';
 import 'settings_provider.dart';
 import 'package:aws_signature_v4/aws_signature_v4.dart';
+import 'settings.dart';
+import 'login.dart'; 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const modelName = 'musicgen-small-v1-asyc-2024-07-07-18-13-00-613';
@@ -509,7 +511,28 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Muziker')),
+      appBar: AppBar(title: const Text("Chat"),
+      actions: <Widget>[
+        //logout
+                IconButton(
+                  onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                        (Route<dynamic> route) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout)),
+
+        //settings
+                IconButton(onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(isOffline: false,)));               
+                  }, 
+                  
+                icon: const Icon(Icons.settings)),
+              ],
+      ),
       body: Chat(
         messages: _messages,
         onAttachmentPressed: _handleAttachmentPressed,
