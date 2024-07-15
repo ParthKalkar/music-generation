@@ -54,21 +54,20 @@ class _LoginPageState extends State<LoginPage> {
             speedMultiplier: 1,
             bounceStiffness: 3,
             minBallRadius: 20,
-            maxBallRadius: 80,
+            maxBallRadius: 65,
             glowRadius: 0.8,
             glowIntensity: 0.9,),
           Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-            ),
             width: double.infinity,
             padding: EdgeInsets.all(20),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                
                 SizedBox(height: 40),
                 Image.asset('assets/Muziker_dark.png'),
                 Column(
+                  //sign in buttons
                   children: [
                     SizedBox(
                       width: 250,
