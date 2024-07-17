@@ -37,5 +37,122 @@
     "status": "seen",
     "text": "Let's generate you an amazing tune!",
     "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Hey there! Ready to create some awesome music?",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Tell me your music preferences and let the magic happen!",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "What kind of vibe are you in the mood for today?",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Let's make some music magic! What's your prompt?",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Share your idea, and I'll turn it into a melody!",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Your music journey starts here! What's your prompt?",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Feeling creative? Give me a prompt and let's make music!",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Let's create a masterpiece! What's your music idea?",
+    "type": "text"
+  },
+  {
+    "author": {
+      "firstName": "Muziker",
+      "id": "4c2307ba-3d40-442f-b1ff-b271f63904ca",
+      "lastName": "AI",
+      "imageUrl": "assets/logo.png"
+    },
+    "createdAt": 1655648404000,
+    "id": "c67ed376-52bf-4d4e-ba2a-7a0f8467b22a",
+    "status": "seen",
+    "text": "Let's turn your words into a symphony! What's the prompt?",
+    "type": "text"
   }
 ]

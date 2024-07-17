@@ -53,8 +53,7 @@ class _LibraryPageState extends State<LibraryPage> {
     var list = musicList;
     if (searchQuery.isNotEmpty) {
       list = list
-          .where((music) =>
-          music['name'].toLowerCase().contains(searchQuery))
+          .where((music) => music['name'].toLowerCase().contains(searchQuery))
           .toList();
     }
     if (showLikedOnly) {
@@ -65,7 +64,12 @@ class _LibraryPageState extends State<LibraryPage> {
 
   void _onMusicTap(String uri) {
     setState(() {
-      _audioPlayerWidget = AudioPlayerWidget(url: uri);
+      _audioPlayerWidget = null;
+    });
+    Future.delayed(Duration.zero, () {
+      setState(() {
+        _audioPlayerWidget = AudioPlayerWidget(url: uri, closePlayer: _closePlayer);
+      });
     });
   }
 
@@ -82,6 +86,12 @@ class _LibraryPageState extends State<LibraryPage> {
     });
   }
 
+  void _closePlayer() {
+    setState(() {
+      _audioPlayerWidget = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,7 +100,7 @@ class _LibraryPageState extends State<LibraryPage> {
         actions: [
           IconButton(
             icon: Icon(showLikedOnly ? Icons.favorite : Icons.menu),
-            onPressed: _toggleFilter, // Toggle filter for liked musics
+            onPressed: _toggleFilter,
           ),
         ],
       ),
@@ -121,13 +131,10 @@ class _LibraryPageState extends State<LibraryPage> {
                 final music = filteredMusicList[index];
                 return ListTile(
                   leading: Icon(Icons.music_note, color: Colors.purpleAccent),
-                  title: Text(music['name'],
-                      style: TextStyle(color: Colors.white)),
+                  title: Text(music['name'], style: TextStyle(color: Colors.white)),
                   trailing: IconButton(
                     icon: Icon(
-                      music['isLiked']
-                          ? Icons.favorite
-                          : Icons.favorite_border,
+                      music['isLiked'] ? Icons.favorite : Icons.favorite_border,
                       color: Colors.purpleAccent,
                     ),
                     onPressed: () => _toggleLike(music['id'], music['isLiked']),

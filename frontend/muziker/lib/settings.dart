@@ -205,109 +205,109 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-            Positioned(
-              bottom: 16,
-              left: 16,
-              child: _hasChanges
-                  ? ElevatedButton(
-                onPressed: () async {
-                  User? user = FirebaseAuth.instance.currentUser;
-                  if (user != null) {
-                    await FirebaseFirestore.instance.collection('params').doc(user.uid).update({
-                      'guidanceScale': settings.guidanceScale,
-                      'maxNewTokens': settings.maxNewTokens,
-                      'temperature': settings.temperature,
-                      'numWords': settings.numWords,
-                      'weightMethod': settings.weightMethod,
-                      'doSample': settings.doSample,
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Settings saved')),
-                    );
-                    setState(() {
-                      _hasChanges = false;
-                    });
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeManager.themeData.primaryColor,
-                  minimumSize: Size(120, 40),
-                ),
-                child: Text('Save Settings'),
-              )
-                  : Container(),
-            ),
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: ElevatedButton(
-                onPressed: () async {
-                  QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('params').get();
-                  double totalGuidanceScale = 0;
-                  num totalMaxNewTokens = 0;
-                  double totalTemperature = 0;
-                  num totalNumWords = 0;
-                  int trueCount = 0;
-                  int falseCount = 0;
-                  Map<String, int> weightMethodCounts = {
-                    'logarithmic': 0,
-                    'exponential': 0,
-                    'balanced': 0,
-                  };
-                  int count = snapshot.docs.length;
+            if (!widget.isOffline) // Conditionally render the "Best Params" button
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('params').get();
+                    double totalGuidanceScale = 0;
+                    num totalMaxNewTokens = 0;
+                    double totalTemperature = 0;
+                    num totalNumWords = 0;
+                    int trueCount = 0;
+                    int falseCount = 0;
+                    Map<String, int> weightMethodCounts = {
+                      'logarithmic': 0,
+                      'exponential': 0,
+                      'balanced': 0,
+                    };
+                    int count = snapshot.docs.length;
 
-                  for (var doc in snapshot.docs) {
-                    totalGuidanceScale += doc['guidanceScale'];
-                    totalMaxNewTokens += doc['maxNewTokens'];
-                    totalTemperature += doc['temperature'];
-                    totalNumWords += doc['numWords'];
-                    if (doc['doSample']) {
-                      trueCount++;
-                    } else {
-                      falseCount++;
+                    for (var doc in snapshot.docs) {
+                      totalGuidanceScale += doc['guidanceScale'];
+                      totalMaxNewTokens += doc['maxNewTokens'];
+                      totalTemperature += doc['temperature'];
+                      totalNumWords += doc['numWords'];
+                      if (doc['doSample']) {
+                        trueCount++;
+                      } else {
+                        falseCount++;
+                      }
+                      weightMethodCounts[doc['weightMethod']] =
+                          (weightMethodCounts[doc['weightMethod']] ?? 0) + 1;
                     }
-                    weightMethodCounts[doc['weightMethod']] =
-                        (weightMethodCounts[doc['weightMethod']] ?? 0) + 1;
-                  }
 
-                  double avgGuidanceScale = totalGuidanceScale / count;
-                  double avgMaxNewTokens = totalMaxNewTokens / count;
-                  double avgTemperature = totalTemperature / count;
-                  double avgNumWords = totalNumWords / count;
+                    double avgGuidanceScale = totalGuidanceScale / count;
+                    double avgMaxNewTokens = totalMaxNewTokens / count;
+                    double avgTemperature = totalTemperature / count;
+                    double avgNumWords = totalNumWords / count;
 
-                  String mostOccurringWeightMethod = weightMethodCounts.entries
-                      .reduce((a, b) => a.value > b.value ? a : b)
-                      .key;
-                  bool mostOccurringDoSample = trueCount > falseCount;
+                    String mostOccurringWeightMethod = weightMethodCounts.entries
+                        .reduce((a, b) => a.value > b.value ? a : b)
+                        .key;
+                    bool mostOccurringDoSample = trueCount > falseCount;
 
-                  settingsProvider.updateSettings(GenerationSettings(
-                    guidanceScale: avgGuidanceScale,
-                    maxNewTokens: avgMaxNewTokens.round(),
-                    doSample: mostOccurringDoSample,
-                    temperature: avgTemperature,
-                    numWords: avgNumWords.round(),
-                    weightMethod: mostOccurringWeightMethod,
-                  ));
+                    settingsProvider.updateSettings(GenerationSettings(
+                      guidanceScale: avgGuidanceScale,
+                      maxNewTokens: avgMaxNewTokens.round(),
+                      doSample: mostOccurringDoSample,
+                      temperature: avgTemperature,
+                      numWords: avgNumWords.round(),
+                      weightMethod: mostOccurringWeightMethod,
+                    ));
 
-                  _onSettingsChanged();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pinkAccent,
-                  minimumSize: Size(120, 40),
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  textStyle: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    _onSettingsChanged();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    minimumSize: Size(120, 40),
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    textStyle: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 10,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 10,
+                  child: Text('Best Params'),
                 ),
-                child: Text('Best Params'),
               ),
-            ),
+            if (_hasChanges)
+              Positioned(
+                bottom: 16,
+                left: 16,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    User? user = FirebaseAuth.instance.currentUser;
+                    if (user != null) {
+                      await FirebaseFirestore.instance.collection('params').doc(user.uid).update({
+                        'guidanceScale': settings.guidanceScale,
+                        'maxNewTokens': settings.maxNewTokens,
+                        'temperature': settings.temperature,
+                        'numWords': settings.numWords,
+                        'weightMethod': settings.weightMethod,
+                        'doSample': settings.doSample,
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Settings saved')),
+                      );
+                      setState(() {
+                        _hasChanges = false;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeManager.themeData.primaryColor,
+                    minimumSize: Size(120, 40),
+                  ),
+                  child: Text('Save Settings'),
+                ),
+              ),
           ],
         ),
       ),

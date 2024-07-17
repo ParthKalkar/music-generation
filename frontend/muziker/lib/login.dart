@@ -19,8 +19,13 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleSignIn() async {
     try {
-      await _googleSignIn.signIn();
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(isOffline: false)));
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage(isOffline: false)));
+      } else {
+        // Handle sign-in cancellation
+        print('Sign-in cancelled by user');
+      }
     } catch (error) {
       print('Error signing in: $error');
     }

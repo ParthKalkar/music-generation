@@ -23,11 +23,21 @@ import 'settings_provider.dart';
 import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-const modelName = 'musicgen-small-v1-asyc-2024-07-10-13-27-57-026';
+const modelName = 'musicgen-small-v1-asyc-2024-07-16-17-53-05-993';
 const awsAccessKey = 'AKIAW3MEFWRIKGK36M6M';
 const awsSecretKey = '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';
 // const awsAccessKey = '';
 // const awsSecretKey = '';
+
+class CancelToken {
+  bool _isCancelled = false;
+
+  bool get isCancelled => _isCancelled;
+
+  void cancel() {
+    _isCancelled = true;
+  }
+}
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -39,6 +49,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   List<types.Message> _messages = [];
   User? _firebaseUser;
+  CancelToken? _cancelToken;
 
   @override
   void initState() {
@@ -213,29 +224,27 @@ class _ChatPageState extends State<ChatPage> {
 
     _addMessage(textMessage);
 
+    // Cancel any ongoing polling
+    _cancelToken?.cancel();
+
+    // Create a new CancelToken for the new request
+    _cancelToken = CancelToken();
+
     // Collect all user messages
     List<String> userMessages = _messages
         .where((msg) => msg is types.TextMessage && msg.author.id == _firebaseUser?.uid)
         .map((msg) => (msg as types.TextMessage).text)
         .toList();
 
-
     final settings = Provider.of<SettingsProvider>(context, listen: false).settings;
-
-
 
     // Calculate weights
     List<Map<String, dynamic>> weightedMessages = _calculateWeights(userMessages, settings.weightMethod);
 
-
     // Use appropriate URL depending on the platform
-    final url = (Platform.isAndroid)
-        ? 'http://10.0.2.2:5000/significant-words'
-        : 'http://127.0.0.1:5000/significant-words';
+    final url = (Platform.isAndroid) ? 'http://10.0.2.2:5000/significant-words' : 'http://127.0.0.1:5000/significant-words';
 
     // Send to backend
-
-
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -254,13 +263,9 @@ class _ChatPageState extends State<ChatPage> {
       // Combine significant words into a single string
       String combinedKeywords = significantWords.join(" ");
       print('Combined Keywords: $combinedKeywords');
-
     } else {
       throw Exception('Failed to load significant words');
     }
-
-
-
 
     // Create JSON payload
     final jsonPayload = jsonEncode({
@@ -279,9 +284,13 @@ class _ChatPageState extends State<ChatPage> {
     print(settings.guidanceScale);
     print(settings.maxNewTokens);
     print(settings.temperature);
-    // Generate a unique file name
-    final fileName = 'payload_${DateTime.now().millisecondsSinceEpoch}.json';
+    final uuid = Uuid();
+    final fileName = 'payload_${uuid.v4()}.json';
     final filePath = 'musicgen_small/input_payload/$fileName';
+
+    // Debugging output to verify file name generation
+    print('Generated file name: $fileName');
+    print('File path: $filePath');
 
     // Upload JSON file to S3
     final s3Uri = await _uploadToS3(jsonPayload, filePath);
@@ -291,12 +300,18 @@ class _ChatPageState extends State<ChatPage> {
     print(outputUri);
 
     // Poll the SageMaker endpoint to get the result
-    final audioUri = await _pollSageMakerResult(outputUri);
-    print(audioUri);
-    // Save to Firestore
-    _saveToFirestore(audioUri, message.text);
-    // Add music message
-    _addMusicMessage(audioUri, message.text);
+    final audioUri = await _pollSageMakerResult(outputUri, _cancelToken!);
+    if (audioUri != null) {
+      print(audioUri);
+
+      // Save to Firestore
+      _saveToFirestore(audioUri, message.text);
+
+      // Add music message
+      _addMusicMessage(audioUri, message.text);
+    } else {
+      print('Polling was cancelled or failed.');
+    }
   }
 
   Future<String> _uploadToS3(String jsonPayload, String filePath) async {
@@ -305,7 +320,7 @@ class _ChatPageState extends State<ChatPage> {
     final endpoint = 'https://$s3Bucket.s3.$region.amazonaws.com/$filePath';
 
     final credentialsProvider = AWSCredentialsProvider(
-        AWSCredentials(awsAccessKey, awsSecretKey)
+      AWSCredentials(awsAccessKey, awsSecretKey),
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
@@ -337,7 +352,6 @@ class _ChatPageState extends State<ChatPage> {
         ..bodyBytes = await signedRequest.bodyBytes,
     );
 
-
     if (response.statusCode == 200) {
       return 's3://$s3Bucket/$filePath';
     } else {
@@ -347,17 +361,15 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<String> _callSageMaker(String s3Uri) async {
-
     final region = 'eu-central-1';
     final endpoint = 'https://runtime.sagemaker.eu-central-1.amazonaws.com/endpoints/$modelName/async-invocations';
 
     final credentialsProvider = AWSCredentialsProvider(
-        AWSCredentials(awsAccessKey, awsSecretKey)
+      AWSCredentials(awsAccessKey, awsSecretKey),
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
     );
-
 
     final request = AWSHttpRequest(
       method: AWSHttpMethod.post,
@@ -407,12 +419,11 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<String> _pollSageMakerResult(String outputUri) async {
-
+  Future<String?> _pollSageMakerResult(String outputUri, CancelToken cancelToken) async {
     final region = 'eu-central-1';
 
     final credentialsProvider = AWSCredentialsProvider(
-        AWSCredentials(awsAccessKey, awsSecretKey)
+      AWSCredentials(awsAccessKey, awsSecretKey),
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
@@ -431,7 +442,7 @@ class _ChatPageState extends State<ChatPage> {
       service: AWSService.s3,
     );
 
-    while (true) {
+    while (!cancelToken.isCancelled) {
       final signedRequest = await signer.sign(
         request,
         credentialScope: scope,
@@ -448,22 +459,21 @@ class _ChatPageState extends State<ChatPage> {
         final jsonResponse = jsonDecode(responseBody);
         print("SageMaker result: $jsonResponse");
         final s3Uri = jsonResponse['generated_output_s3'];
-        // final output = s3ToHttp(s3Uri);
         final output = s3Uri;
         print(output);
 
         return output;
-
       } else if (response.statusCode == 202) {
         print("Job is still in progress, retrying...");
       } else {
         print("Polling failed: ${response.statusCode}");
-        print("Job is still in progress, retrying...");
       }
 
       // Wait for a few seconds before polling again
       await Future.delayed(Duration(seconds: 5));
     }
+
+    return null;
   }
 
   Future<void> _saveToFirestore(String url, String name) async {
@@ -473,7 +483,7 @@ class _ChatPageState extends State<ChatPage> {
         'uid': user.uid,
         'uri': url,
         'name': name,
-        'isLiked': false
+        'isLiked': false,
       });
     } else {
       print('No user is signed in');
@@ -500,7 +510,6 @@ class _ChatPageState extends State<ChatPage> {
     print(url);
     _addMessage(musicMessage);
   }
-
 
   List<Map<String, dynamic>> _calculateWeights(List<String> messages, String weightMethod) {
     int n = messages.length;
