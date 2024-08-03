@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'chat.dart';
 import 'settings.dart';
 import 'library.dart';
+import 'analysis.dart'; // Add this import
 import 'login.dart'; // Assuming this is the login page file
 
 class HomePage extends StatelessWidget {
@@ -70,6 +71,29 @@ class HomePage extends StatelessWidget {
                     },
                     child: const Text(
                       'Library',
+                      style: TextStyle(fontSize: 16),  // Larger text size
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF4D057A),  // Set uniform color
+                      foregroundColor: Colors.white,  // Text color
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),  // Rounded corners
+                      ),
+                      elevation: 10,  // Shadow elevation
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                if (!isOffline)
+                SizedBox(
+                  width: buttonWidth,
+                  height: buttonHeight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const AnalysisPage())); // Add navigation to AnalysisPage
+                    },
+                    child: const Text(
+                      'Analysis',
                       style: TextStyle(fontSize: 16),  // Larger text size
                     ),
                     style: ElevatedButton.styleFrom(

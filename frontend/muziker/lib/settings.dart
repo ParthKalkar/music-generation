@@ -38,11 +38,57 @@ class _SettingsPageState extends State<SettingsPage> {
     settingsProvider.updateSettings(_originalSettings);
   }
 
+  void _showInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Settings Info'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Guidance Scale: Adjusts the influence of the prompt on the generated music.'),
+                SizedBox(height: 8),
+                Text('Max New Tokens: The maximum number of tokens to generate.'),
+                SizedBox(height: 8),
+                Text('Do Sample: Enables or disables sampling during generation.'),
+                SizedBox(height: 8),
+                Text('Temperature: Controls the randomness of the generation.'),
+                SizedBox(height: 8),
+                Text('Number of Words: Number of selected words for the feedback loop algorithm.'),
+                SizedBox(height: 8),
+                Text('Weight Method: Weighting types for keyword selection:\n∞ Exponential (last prompts dominates)\n∞ Logarithmic (Model tends to remember first prompts better)\n∞ Balanced (last prompts are weighted more but in more balanced manner) '),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Got it!'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final settings = settingsProvider.settings;
     final themeManager = Provider.of<ThemeManager>(context);
+
+    ThemeMode getThemeMode() {
+      if (themeManager.themeData == lightTheme) {
+        return ThemeMode.light;
+      } else if (themeManager.themeData == darkTheme) {
+        return ThemeMode.dark;
+      } else {
+        return ThemeMode.system;
+      }
+    }
 
     return WillPopScope(
       onWillPop: () async {
@@ -52,7 +98,15 @@ class _SettingsPageState extends State<SettingsPage> {
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Settings')),
+        appBar: AppBar(
+          title: const Text('Settings'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.info_outline),
+              onPressed: () => _showInfoDialog(context),
+            ),
+          ],
+        ),
         body: Stack(
           children: [
             SingleChildScrollView(
@@ -61,12 +115,28 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Theme Settings'),
-                  Switch(
-                    value: themeManager.isDark,
-                    onChanged: (value) {
-                      themeManager.toggleTheme();
-                      _onSettingsChanged();
+                  DropdownButton<ThemeMode>(
+                    value: getThemeMode(),
+                    onChanged: (ThemeMode? newValue) {
+                      if (newValue != null) {
+                        themeManager.setTheme(newValue);
+                        _onSettingsChanged();
+                      }
                     },
+                    items: [
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('Color-blind Friendly'),
+                      ),
+                    ],
                   ),
                   if (!widget.isOffline) ...[
                     const SizedBox(height: 20),

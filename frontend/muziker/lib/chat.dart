@@ -23,9 +23,9 @@ import 'settings_provider.dart';
 import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-const modelName = 'musicgen-small-v1-asyc-2024-07-16-17-53-05-993';
-const awsAccessKey = 'AKIAW3MEFWRIKGK36M6M';
-const awsSecretKey = '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';
+const modelName = '';
+const awsAccessKey = '';
+const awsSecretKey = '';
 // const awsAccessKey = '';
 // const awsSecretKey = '';
 
