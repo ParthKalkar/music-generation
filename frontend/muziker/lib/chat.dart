@@ -24,8 +24,8 @@ import 'package:aws_signature_v4/aws_signature_v4.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const modelName = '';
-const awsAccessKey = '';
-const awsSecretKey = '';
+const k1 = '';
+const k2 = '';
 // const awsAccessKey = '';
 // const awsSecretKey = '';
 
@@ -320,7 +320,7 @@ class _ChatPageState extends State<ChatPage> {
     final endpoint = 'https://$s3Bucket.s3.$region.amazonaws.com/$filePath';
 
     final credentialsProvider = AWSCredentialsProvider(
-      AWSCredentials(awsAccessKey, awsSecretKey),
+      AWSCredentials(k1, k2),
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
@@ -365,7 +365,7 @@ class _ChatPageState extends State<ChatPage> {
     final endpoint = 'https://runtime.sagemaker.eu-central-1.amazonaws.com/endpoints/$modelName/async-invocations';
 
     final credentialsProvider = AWSCredentialsProvider(
-      AWSCredentials(awsAccessKey, awsSecretKey),
+      AWSCredentials(k1, k2),
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
@@ -423,7 +423,7 @@ class _ChatPageState extends State<ChatPage> {
     final region = 'eu-central-1';
 
     final credentialsProvider = AWSCredentialsProvider(
-      AWSCredentials(awsAccessKey, awsSecretKey),
+      AWSCredentials(k1, k2),
     );
     final signer = AWSSigV4Signer(
       credentialsProvider: credentialsProvider,
