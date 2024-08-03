@@ -26,8 +26,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 const modelName = '';
 const k1 = '';
 const k2 = '';
-// const awsAccessKey = '';
-// const awsSecretKey = '';
 
 class CancelToken {
   bool _isCancelled = false;
